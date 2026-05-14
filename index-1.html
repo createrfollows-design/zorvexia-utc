@@ -1,1 +1,562 @@
- 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Zorvexia UTC</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #07090f;
+  --surface:   rgba(255,255,255,0.035);
+  --border:    rgba(255,255,255,0.07);
+  --gold:      #c8a84b;
+  --gold-dim:  rgba(200,168,75,0.15);
+  --gold-glow: rgba(200,168,75,0.35);
+  --blue:      #3d8fcc;
+  --text:      #dde1ee;
+  --muted:     #515870;
+  --green:     #2ecc8a;
+  --red:       #e05252;
+  --orange:    #e0913a;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(200,168,75,0.09) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 90% 80%,  rgba(61,143,204,0.06) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg,   transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+    repeating-linear-gradient(90deg,  transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── WRAPPER ── */
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 0 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── HEADER ── */
+header {
+  width: 100%;
+  padding: 28px 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fadeDown 0.5s ease both;
+}
+
+.logo-ring {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  border: 1.5px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gold-dim);
+  box-shadow: 0 0 16px var(--gold-glow);
+  flex-shrink: 0;
+}
+
+.logo-ring svg { width: 20px; height: 20px; }
+
+.logo-text {
+  display: flex; flex-direction: column; gap: 1px;
+}
+
+.logo-title {
+  font-size: 15px; font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.logo-sub {
+  font-size: 10px; font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.badge-secure {
+  margin-left: auto;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--green);
+  background: rgba(46,204,138,0.1);
+  border: 1px solid rgba(46,204,138,0.25);
+  border-radius: 20px;
+  padding: 4px 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── DEAL CARD ── */
+.card {
+  width: calc(100% - 32px);
+  max-width: 420px;
+  margin: 24px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: fadeUp 0.5s 0.1s ease both;
+  backdrop-filter: blur(10px);
+}
+
+.card-header {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+
+.deal-id-label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.deal-id {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px; font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-pill.pending  { background: rgba(224,145,58,0.12);  color: var(--orange); border: 1px solid rgba(224,145,58,0.25); }
+.status-pill.nft_sent { background: rgba(61,143,204,0.12);  color: var(--blue);   border: 1px solid rgba(61,143,204,0.25); }
+.status-pill.stars_sent{ background: rgba(200,168,75,0.12); color: var(--gold);   border: 1px solid rgba(200,168,75,0.25); }
+.status-pill.completed{ background: rgba(46,204,138,0.12);  color: var(--green);  border: 1px solid rgba(46,204,138,0.25); }
+.status-pill.cancelled{ background: rgba(224,82,82,0.12);   color: var(--red);    border: 1px solid rgba(224,82,82,0.25); }
+.status-pill.dispute  { background: rgba(224,82,82,0.12);   color: var(--red);    border: 1px solid rgba(224,82,82,0.25); }
+
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+/* ── NFT BLOCK ── */
+.nft-block {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+}
+
+.nft-icon {
+  width: 52px; height: 52px; flex-shrink: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(200,168,75,0.2), rgba(61,143,204,0.2));
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+
+.nft-info { flex: 1; min-width: 0; }
+
+.nft-name-label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.nft-name {
+  font-size: 15px; font-weight: 700;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nft-link {
+  font-size: 11px; color: var(--blue);
+  text-decoration: none; font-family: 'DM Mono', monospace;
+  opacity: 0.8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: block; margin-top: 2px;
+}
+
+/* ── PRICE BLOCK ── */
+.price-block {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.price-label {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--muted);
+}
+
+.price-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 26px; font-weight: 500;
+  color: var(--gold);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.price-value span { font-size: 14px; color: var(--muted); }
+
+/* ── PARTIES ── */
+.parties {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.party-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+}
+
+.party-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--muted);
+}
+
+.party-icon {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+
+.party-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 500; color: var(--text);
+}
+
+/* ── STEPS ── */
+.steps {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.steps-title {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.step-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 12px;
+}
+
+.step-row:last-child { margin-bottom: 0; }
+
+.step-num {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border-radius: 50%; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  margin-top: 1px;
+}
+
+.step-num.done {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(46,204,138,0.1);
+}
+
+.step-text {
+  font-size: 13px; color: var(--text); line-height: 1.5;
+}
+
+.step-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ── META ── */
+.meta {
+  padding: 14px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.meta-item { text-align: center; }
+.meta-label {
+  font-size: 9px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--muted); margin-bottom: 3px;
+}
+.meta-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px; color: var(--text);
+}
+
+/* ── SUPPORT BTN ── */
+.btn-support {
+  width: calc(100% - 32px);
+  max-width: 420px;
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+  animation: fadeUp 0.5s 0.2s ease both;
+}
+
+.btn-support:active {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* ── DISCLAIMER ── */
+.disclaimer {
+  width: calc(100% - 32px);
+  max-width: 420px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: 14px;
+  font-size: 11px; line-height: 1.6; color: rgba(200,168,75,0.85);
+  animation: fadeUp 0.5s 0.3s ease both;
+}
+
+.disclaimer strong { color: var(--gold); }
+
+/* ── NO DEAL STATE ── */
+.no-deal {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 60px 32px;
+  gap: 16px;
+  animation: fadeUp 0.5s ease both;
+}
+
+.no-deal-icon { font-size: 48px; opacity: 0.4; }
+.no-deal-title { font-size: 20px; font-weight: 700; color: var(--text); }
+.no-deal-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeDown {
+  from { opacity:0; transform: translateY(-12px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(14px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-ring">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#c8a84b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-title">Zorvexia UTC</div>
+      <div class="logo-sub">Escrow Service</div>
+    </div>
+    <div class="badge-secure">🔒 Secured</div>
+  </header>
+
+  <div id="content"></div>
+
+</div>
+
+<script>
+// ── Init Telegram WebApp ──────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#07090f');
+  tg.setBackgroundColor('#07090f');
+}
+
+// ── Parse URL params ──────────────────────────
+const params = Object.fromEntries(new URLSearchParams(location.search));
+
+const STATUS_CONFIG = {
+  pending:    { label: 'Ожидает',     cls: 'pending',    icon: '⏳', steps: [0,0,0] },
+  nft_sent:   { label: 'NFT получен', cls: 'nft_sent',   icon: '📦', steps: [1,0,0] },
+  stars_sent: { label: 'Оплачено',    cls: 'stars_sent', icon: '⭐', steps: [1,1,0] },
+  completed:  { label: 'Завершена',   cls: 'completed',  icon: '✅', steps: [1,1,1] },
+  cancelled:  { label: 'Отменена',    cls: 'cancelled',  icon: '❌', steps: [0,0,0] },
+  dispute:    { label: 'Спор',        cls: 'dispute',    icon: '⚠️', steps: [0,0,0] },
+};
+
+const STEPS_TEXT = [
+  { title: 'Продавец отправляет NFT гаранту', sub: 'на аккаунт @Veoix' },
+  { title: 'Покупатель переводит Stars',       sub: 'на аккаунт продавца' },
+  { title: 'Гарант подтверждает сделку',      sub: 'обе стороны получают активы' },
+];
+
+function render() {
+  const container = document.getElementById('content');
+
+  if (!params.id) {
+    container.innerHTML = `
+      <div class="no-deal">
+        <div class="no-deal-icon">🔍</div>
+        <div class="no-deal-title">Сделка не найдена</div>
+        <div class="no-deal-sub">Убедитесь что вы перешли по правильной ссылке от участника сделки.</div>
+      </div>`;
+    return;
+  }
+
+  const st = STATUS_CONFIG[params.status] || STATUS_CONFIG.pending;
+  const stepsState = st.steps;
+
+  const stepsHTML = STEPS_TEXT.map((s, i) => `
+    <div class="step-row">
+      <div class="step-num ${stepsState[i] ? 'done' : ''}">${stepsState[i] ? '✓' : i+1}</div>
+      <div>
+        <div class="step-text">${s.title}</div>
+        <div class="step-sub">${s.sub}</div>
+      </div>
+    </div>
+  `).join('');
+
+  const nftLinkDisplay = params.link
+    ? params.link.replace('https://', '').replace('http://', '')
+    : '';
+
+  container.innerHTML = `
+    <div class="card">
+      <!-- Header -->
+      <div class="card-header">
+        <div>
+          <div class="deal-id-label">Deal ID</div>
+          <div class="deal-id">#${params.id}</div>
+        </div>
+        <div class="status-pill ${st.cls}">
+          <span class="dot"></span>
+          ${st.icon} ${st.label}
+        </div>
+      </div>
+
+      <!-- NFT -->
+      <div class="nft-block">
+        <div class="nft-icon">🖼️</div>
+        <div class="nft-info">
+          <div class="nft-name-label">Telegram NFT</div>
+          <div class="nft-name">${params.nft || '—'}</div>
+          ${params.link ? `<a class="nft-link" href="${params.link}" target="_blank">${nftLinkDisplay}</a>` : ''}
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div class="price-block">
+        <div class="price-label">Цена сделки</div>
+        <div class="price-value">
+          ⭐ ${params.price || '0'} <span>Stars</span>
+        </div>
+      </div>
+
+      <!-- Parties -->
+      <div class="parties">
+        <div class="party-row">
+          <div class="party-label">
+            <div class="party-icon">📤</div>
+            Продавец
+          </div>
+          <div class="party-name">@${params.seller || '—'}</div>
+        </div>
+        <div class="party-row">
+          <div class="party-label">
+            <div class="party-icon">📥</div>
+            Покупатель
+          </div>
+          <div class="party-name">@${params.buyer || '—'}</div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div class="steps">
+        <div class="steps-title">Этапы сделки</div>
+        ${stepsHTML}
+      </div>
+
+      <!-- Meta -->
+      <div class="meta">
+        <div class="meta-item">
+          <div class="meta-label">Создана</div>
+          <div class="meta-val">${params.created || '—'}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Гарант</div>
+          <div class="meta-val">@Veoix</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Статус</div>
+          <div class="meta-val">${st.icon} ${st.label}</div>
+        </div>
+      </div>
+    </div>
+
+    <a class="btn-support" href="https://t.me/Veoix" target="_blank">
+      💬 Написать в поддержку
+    </a>
+
+    <div class="disclaimer">
+      <strong>🛡️ Защита гаранта:</strong> Активы передаются только после подтверждения обеих сторон.
+      Гарант выступает посредником и не несёт финансовой ответственности за действия участников.
+    </div>
+  `;
+}
+
+render();
+</script>
+</body>
+</html>
